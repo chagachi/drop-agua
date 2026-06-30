@@ -11,6 +11,8 @@ import { MotoristaDetail } from './pages/Motoristas/MotoristaDetail'
 import { MotoristaCreate } from './pages/Motoristas/MotoristaCreate'
 import { PlacasList } from './pages/Placas/PlacasList'
 import { PlacaCreate } from './pages/Placas/PlacaCreate'
+import { PedidosList } from './pages/Pedidos/PedidosList'
+import { PedidoForm } from './pages/Pedidos/PedidoForm'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AdminRoute } from './auth/AdminRoute'
 
@@ -100,6 +102,30 @@ export function App() {
         element={
           <ProtectedRoute>
             <PlacaCreate />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vales"
+        element={
+          <ProtectedRoute>
+            <PedidosList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vales/novo"
+        element={
+          <ProtectedRoute>
+            <PedidoForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vales/:id"
+        element={
+          <ProtectedRoute>
+            <PedidoForm />
           </ProtectedRoute>
         }
       />
