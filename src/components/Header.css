@@ -1,0 +1,29 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: #0b6e99;
+  color: #fff;
+}
+
+.app-header__brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.app-header__nav {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.app-header__nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.app-header__nav a:hover {
+  text-decoration: underline;
+}
