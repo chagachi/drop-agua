@@ -21,10 +21,17 @@
 .ticket__header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   font-size: 1.1rem;
   border-bottom: 1px solid #ccc;
   padding-bottom: 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+.ticket__cnpj {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #555;
 }
 
 .ticket__row {

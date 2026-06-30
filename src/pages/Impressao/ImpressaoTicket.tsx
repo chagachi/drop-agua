@@ -9,7 +9,10 @@ function Copia({ pedido, via }: { pedido: Pedido; via: string }) {
   return (
     <div className="ticket">
       <div className="ticket__header">
-        <strong>Drop Água</strong>
+        <div>
+          <strong>Drop Água</strong>
+          <div className="ticket__cnpj">CNPJ: 66.553.601/0001-30</div>
+        </div>
         <span>{via}</span>
       </div>
       <div className="ticket__row">
