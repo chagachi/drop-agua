@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../../components/Header'
 import { useAuth } from '../../auth/useAuth'
 import { listEmpresasForSelect } from '../../services/empresas'
@@ -164,7 +164,7 @@ export function PedidoForm() {
         navigate(`/vales/${id}`)
       } else {
         const pedido = await createPedido(payload)
-        navigate(`/vales/${pedido.id}`)
+        navigate(`/impressao/${pedido.id}`)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar pedido.')
@@ -186,7 +186,14 @@ export function PedidoForm() {
     <div>
       <Header />
       <div className="page-content">
-        <h1>{isEdit ? `Vale Nº ${id}` : 'Novo Vale'}</h1>
+        <div className="page-content__toolbar">
+          <h1>{isEdit ? `Vale Nº ${id}` : 'Novo Vale'}</h1>
+          {isEdit && (
+            <Link className="btn btn-secondary" to={`/impressao/${id}`}>
+              Imprimir
+            </Link>
+          )}
+        </div>
         {error && <p className="login-form__error">{error}</p>}
 
         {showModal && (

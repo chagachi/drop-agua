@@ -13,6 +13,9 @@ import { PlacasList } from './pages/Placas/PlacasList'
 import { PlacaCreate } from './pages/Placas/PlacaCreate'
 import { PedidosList } from './pages/Pedidos/PedidosList'
 import { PedidoForm } from './pages/Pedidos/PedidoForm'
+import { Relatorios } from './pages/Relatorios/Relatorios'
+import { RelatorioPrint } from './pages/Relatorios/RelatorioPrint'
+import { ImpressaoTicket } from './pages/Impressao/ImpressaoTicket'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AdminRoute } from './auth/AdminRoute'
 
@@ -126,6 +129,30 @@ export function App() {
         element={
           <ProtectedRoute>
             <PedidoForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/relatorios"
+        element={
+          <AdminRoute>
+            <Relatorios />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/relatorios/imprimir"
+        element={
+          <AdminRoute>
+            <RelatorioPrint />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/impressao/:id"
+        element={
+          <ProtectedRoute>
+            <ImpressaoTicket />
           </ProtectedRoute>
         }
       />

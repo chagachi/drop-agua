@@ -1,0 +1,24 @@
+.relatorio-print {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.relatorio-print__totals {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.relatorio-print .no-print {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
+}
