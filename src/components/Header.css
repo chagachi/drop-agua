@@ -8,8 +8,16 @@
 }
 
 .app-header__brand {
-  font-weight: 700;
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+}
+
+.app-header__brand img {
+  height: 32px;
+  display: block;
 }
 
 .app-header__nav {

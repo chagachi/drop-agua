@@ -17,10 +17,10 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.login-form h1 {
+.login-form__logo {
+  display: block;
+  max-width: 100%;
   margin: 0 0 0.5rem;
-  text-align: center;
-  color: #0b6e99;
 }
 
 .login-form label {

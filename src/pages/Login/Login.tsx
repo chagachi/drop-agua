@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../auth/useAuth'
+import logo from '../../assets/logo.jpg'
 import './Login.css'
 
 export function Login() {
@@ -36,7 +37,7 @@ export function Login() {
   return (
     <div className="login-page">
       <form className="login-form" onSubmit={handleSubmit}>
-        <h1>Drop Água</h1>
+        <img src={logo} alt="Drop Água" className="login-form__logo" />
         <label>
           E-mail
           <input

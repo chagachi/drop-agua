@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import logo from '../assets/logo.jpg'
 import './Header.css'
 
 export function Header() {
@@ -7,7 +8,9 @@ export function Header() {
 
   return (
     <header className="app-header">
-      <div className="app-header__brand">Drop Água</div>
+      <Link to="/dashboard" className="app-header__brand">
+        <img src={logo} alt="Drop Água" />
+      </Link>
       <nav className="app-header__nav">
         <Link to="/dashboard">Início</Link>
         <Link to="/clientes">Clientes</Link>
