@@ -9,7 +9,31 @@
   padding: 2rem 1.5rem;
 }
 
-.dashboard-content__hint {
+.dashboard-cards {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+}
+
+.dashboard-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0b6e99;
+}
+
+.dashboard-card__label {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
 }

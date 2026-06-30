@@ -1,0 +1,31 @@
+.pagination {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.pagination button {
+  min-width: 2.2rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagination__current {
+  background: #0b6e99 !important;
+  color: #fff;
+  border-color: #0b6e99 !important;
+}
+
+.pagination__ellipsis {
+  padding: 0.4rem 0.2rem;
+  color: #888;
+}
