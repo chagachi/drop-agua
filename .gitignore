@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 scripts/.env.migration
+/*.sql
 
 # Editor directories and files
 .vscode/*
