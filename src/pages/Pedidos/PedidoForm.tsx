@@ -7,6 +7,7 @@ import { listMotoristasForSelect } from '../../services/motoristas'
 import { listPlacasForSelect } from '../../services/placas'
 import { createPedido, getPedido, updatePedido } from '../../services/pedidos'
 import { formatCurrency } from '../../utils/format'
+import { calcTotalLiquido } from '../../utils/calc'
 import type { Empresa, Motorista, Placa } from '../../types/database'
 
 export function PedidoForm() {
@@ -41,7 +42,7 @@ export function PedidoForm() {
   const [createdAt, setCreatedAt] = useState('')
 
   const valorUnitario = retirada ? valorRetiradaEmpresa : valorEntregaEmpresa
-  const totalLiquido = quantidadeCarga * valorUnitario
+  const totalLiquido = calcTotalLiquido(quantidadeCarga, valorUnitario)
 
   useEffect(() => {
     Promise.all([listEmpresasForSelect(), listMotoristasForSelect(), listPlacasForSelect()])

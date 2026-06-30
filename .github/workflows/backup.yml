@@ -1,0 +1,30 @@
+name: Backup do banco
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # 07:00 UTC ≈ 04:00 (horário de Brasília)
+  workflow_dispatch:
+
+jobs:
+  pg-dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente Postgres
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Gerar dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Secret SUPABASE_DB_URL não configurado — veja README para instruções." >&2
+            exit 1
+          fi
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges -f backup-$(date +%Y-%m-%d).sql
+
+      - name: Publicar como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_id }}
+          path: backup-*.sql
+          retention-days: 90

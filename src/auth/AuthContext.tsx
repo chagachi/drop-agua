@@ -8,6 +8,7 @@ interface AuthContextValue {
   profile: Profile | null
   loading: boolean
   isAdmin: boolean
+  deactivated: boolean
 }
 
 export const AuthContext = createContext<AuthContextValue>({
@@ -15,6 +16,7 @@ export const AuthContext = createContext<AuthContextValue>({
   profile: null,
   loading: true,
   isAdmin: false,
+  deactivated: false,
 })
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -30,24 +32,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deactivated, setDeactivated] = useState(false)
 
   useEffect(() => {
     let mounted = true
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    async function handleSession(session: Session | null) {
       if (!mounted) return
       setSession(session)
-      if (session) {
-        setProfile(await fetchProfile(session.user.id))
-      }
-      setLoading(false)
-    })
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session) {
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+
+      const fetched = await fetchProfile(session.user.id)
       if (!mounted) return
-      setSession(session)
-      setProfile(session ? await fetchProfile(session.user.id) : null)
+
+      if (fetched && !fetched.is_active) {
+        setDeactivated(true)
+        setProfile(null)
+        setSession(null)
+        setLoading(false)
+        await supabase.auth.signOut()
+        return
+      }
+
+      setProfile(fetched)
       setLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session))
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session)
     })
 
     return () => {
@@ -59,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = profile?.is_admin === true
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, isAdmin }}>
+    <AuthContext.Provider value={{ session, profile, loading, isAdmin, deactivated }}>
       {children}
     </AuthContext.Provider>
   )

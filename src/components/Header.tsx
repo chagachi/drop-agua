@@ -18,6 +18,7 @@ export function Header() {
         <Link to="/motoristas">Motoristas</Link>
         <Link to="/placas">Placas</Link>
         {isAdmin && <Link to="/relatorios">Relatórios</Link>}
+        {isAdmin && <Link to="/usuarios">Usuários</Link>}
         <Link to="/logout">Sair</Link>
       </nav>
     </header>

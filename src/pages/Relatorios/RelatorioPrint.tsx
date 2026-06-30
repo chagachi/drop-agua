@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listPedidosByRange } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
+import { sumQuantidade, sumTotalLiquido } from '../../utils/calc'
 import type { Pedido } from '../../types/database'
 import './RelatorioPrint.css'
 
@@ -47,8 +48,8 @@ export function RelatorioPrint() {
   if (error) return <div className="page-content">{error}</div>
   if (!pedidos) return <div className="page-content">Carregando...</div>
 
-  const totalQuantidade = pedidos.reduce((sum, p) => sum + p.quantidade_carga, 0)
-  const totalValor = pedidos.reduce((sum, p) => sum + p.total_liquido, 0)
+  const totalQuantidade = sumQuantidade(pedidos)
+  const totalValor = sumTotalLiquido(pedidos)
 
   return (
     <div className="relatorio-print">

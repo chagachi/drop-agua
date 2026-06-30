@@ -4,6 +4,7 @@
 
 export interface Profile {
   id: string
+  email: string
   is_admin: boolean
   is_active: boolean
   created_at: string
@@ -70,43 +71,29 @@ export interface Pedido {
 }
 
 export interface Database {
-  __InternalSupabase: {
-    PostgrestVersion: '13'
-  }
   public: {
     Tables: {
-      profiles: {
-        Row: Profile
-        Insert: Partial<Profile>
-        Update: Partial<Profile>
-        Relationships: []
-      }
+      profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> }
       empresas: {
         Row: Empresa
         Insert: Omit<Empresa, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Empresa, 'id' | 'created_at' | 'updated_at'>>
-        Relationships: []
       }
       motoristas: {
         Row: Motorista
         Insert: Omit<Motorista, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Motorista, 'id' | 'created_at' | 'updated_at'>>
-        Relationships: []
       }
       placas: {
         Row: Placa
         Insert: Omit<Placa, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Placa, 'id' | 'created_at' | 'updated_at'>>
-        Relationships: []
       }
       pedidos: {
         Row: Pedido
         Insert: Omit<Pedido, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Pedido, 'id' | 'created_at' | 'updated_at'>>
-        Relationships: []
       }
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
   }
 }

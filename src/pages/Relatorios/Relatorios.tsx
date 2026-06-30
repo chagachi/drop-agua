@@ -5,6 +5,7 @@ import { listEmpresasForSelect } from '../../services/empresas'
 import { listMotoristasForSelect } from '../../services/motoristas'
 import { listPedidosByRange } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
+import { sumQuantidade, sumTotalLiquido } from '../../utils/calc'
 import type { Empresa, Motorista, Pedido } from '../../types/database'
 import './Relatorios.css'
 
@@ -157,8 +158,8 @@ export function Relatorios() {
     return sorted
   }, [pedidos, somenteRetiradas, sortField, sortDirection])
 
-  const totalQuantidade = resultadoFiltrado.reduce((sum, p) => sum + p.quantidade_carga, 0)
-  const totalValor = resultadoFiltrado.reduce((sum, p) => sum + p.total_liquido, 0)
+  const totalQuantidade = sumQuantidade(resultadoFiltrado)
+  const totalValor = sumTotalLiquido(resultadoFiltrado)
   const totalEntregas = resultadoFiltrado.filter((p) => !p.retirada).length
   const totalRetiradas = resultadoFiltrado.filter((p) => p.retirada).length
 

@@ -16,6 +16,7 @@ import { PedidoForm } from './pages/Pedidos/PedidoForm'
 import { Relatorios } from './pages/Relatorios/Relatorios'
 import { RelatorioPrint } from './pages/Relatorios/RelatorioPrint'
 import { ImpressaoTicket } from './pages/Impressao/ImpressaoTicket'
+import { UsuariosList } from './pages/Usuarios/UsuariosList'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AdminRoute } from './auth/AdminRoute'
 
@@ -154,6 +155,14 @@ export function App() {
           <ProtectedRoute>
             <ImpressaoTicket />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/usuarios"
+        element={
+          <AdminRoute>
+            <UsuariosList />
+          </AdminRoute>
         }
       />
     </Routes>

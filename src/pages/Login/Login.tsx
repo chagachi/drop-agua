@@ -1,17 +1,20 @@
-import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Navigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../auth/useAuth'
 import logo from '../../assets/logo.jpg'
 import './Login.css'
 
 export function Login() {
-  const { session, loading } = useAuth()
-  const navigate = useNavigate()
+  const { session, loading, deactivated } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (deactivated) setSubmitting(false)
+  }, [deactivated])
 
   if (!loading && session) {
     return <Navigate to="/dashboard" replace />
@@ -24,14 +27,13 @@ export function Login() {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    setSubmitting(false)
-
     if (error) {
+      setSubmitting(false)
       setError('E-mail ou senha inválidos.')
       return
     }
-
-    navigate('/dashboard')
+    // continua "submitting" até a navegação reativa acontecer (ou a conta
+    // ser detectada como desativada, ver useEffect acima)
   }
 
   return (
@@ -58,6 +60,11 @@ export function Login() {
           />
         </label>
         {error && <p className="login-form__error">{error}</p>}
+        {deactivated && (
+          <p className="login-form__error">
+            Sua conta foi desativada. Fale com um administrador.
+          </p>
+        )}
         <button type="submit" disabled={submitting}>
           {submitting ? 'Entrando...' : 'Entrar'}
         </button>

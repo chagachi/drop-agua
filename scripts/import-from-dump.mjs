@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { config } from 'dotenv'
 import { extractTable } from './parse-sql-dump.mjs'
+import { parseDecimal } from './decimal.mjs'
 
 config({ path: resolve(import.meta.dirname, '.env.migration') })
 
@@ -28,19 +29,6 @@ for (const [key, val] of Object.entries({
     console.error(`Variável ${key} não definida em scripts/.env.migration`)
     process.exit(1)
   }
-}
-
-function parseDecimal(value) {
-  if (value === null || value === undefined) return 0
-  let str = String(value).trim()
-  if (str === '') return 0
-  // Só trata '.' como separador de milhar quando há ',' como separador decimal
-  // (formato BR "1.234,56"); senão o '.' já é o ponto decimal ("25.93").
-  if (str.includes(',')) {
-    str = str.replace(/\./g, '').replace(',', '.')
-  }
-  const n = Number.parseFloat(str)
-  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0
 }
 
 function nullableText(value) {

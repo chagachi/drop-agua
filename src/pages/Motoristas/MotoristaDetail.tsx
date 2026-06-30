@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../../components/Header'
 import { useAuth } from '../../auth/useAuth'
 import { getMotorista, updateMotorista } from '../../services/motoristas'
+import { formatPhone } from '../../utils/format'
 
 export function MotoristaDetail() {
   const { id } = useParams<{ id: string }>()
@@ -66,11 +67,19 @@ export function MotoristaDetail() {
             </label>
             <label>
               Telefone
-              <input value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+              <input
+                value={telefone}
+                onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                maxLength={15}
+              />
             </label>
             <label>
               Celular
-              <input value={celular} onChange={(e) => setCelular(e.target.value)} />
+              <input
+                value={celular}
+                onChange={(e) => setCelular(formatPhone(e.target.value))}
+                maxLength={15}
+              />
             </label>
             <div className="record-form__actions">
               <button className="btn btn-primary" type="submit" disabled={saving}>

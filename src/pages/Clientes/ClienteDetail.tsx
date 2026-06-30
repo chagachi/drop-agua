@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../../components/Header'
 import { useAuth } from '../../auth/useAuth'
 import { getEmpresa, updateEmpresa } from '../../services/empresas'
+import { formatCNPJ, formatPhone } from '../../utils/format'
 import type { Empresa } from '../../types/database'
 
 type FormState = Omit<Empresa, 'id' | 'created_at' | 'updated_at'>
@@ -90,7 +91,11 @@ export function ClienteDetail() {
             </label>
             <label>
               CNPJ
-              <input value={form.cnpj ?? ''} onChange={(e) => set('cnpj', e.target.value)} />
+              <input
+                value={form.cnpj ?? ''}
+                onChange={(e) => set('cnpj', formatCNPJ(e.target.value))}
+                maxLength={18}
+              />
             </label>
             <label>
               Inscrição Estadual
@@ -134,14 +139,16 @@ export function ClienteDetail() {
               Telefone
               <input
                 value={form.telefone1 ?? ''}
-                onChange={(e) => set('telefone1', e.target.value)}
+                onChange={(e) => set('telefone1', formatPhone(e.target.value))}
+                maxLength={15}
               />
             </label>
             <label>
               Celular
               <input
                 value={form.telefone2 ?? ''}
-                onChange={(e) => set('telefone2', e.target.value)}
+                onChange={(e) => set('telefone2', formatPhone(e.target.value))}
+                maxLength={15}
               />
             </label>
             <label>
