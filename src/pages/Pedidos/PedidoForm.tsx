@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../../components/Header'
 import { useAuth } from '../../auth/useAuth'
-import { listEmpresasForSelect } from '../../services/empresas'
+import { searchEmpresasByNome } from '../../services/empresas'
 import { listMotoristasForSelect } from '../../services/motoristas'
 import { listPlacasForSelect } from '../../services/placas'
 import { createPedido, getPedido, updatePedido } from '../../services/pedidos'
@@ -16,13 +16,20 @@ export function PedidoForm() {
   const { session, isAdmin } = useAuth()
   const navigate = useNavigate()
 
-  const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [motoristas, setMotoristas] = useState<Motorista[]>([])
   const [placas, setPlacas] = useState<Placa[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Empresa combobox
+  const [empresaQuery, setEmpresaQuery] = useState('')
+  const [empresaSuggestions, setEmpresaSuggestions] = useState<Empresa[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchingEmpresas, setSearchingEmpresas] = useState(false)
+  const comboboxRef = useRef<HTMLDivElement>(null)
+
+  // Empresa selecionada
   const [empresaId, setEmpresaId] = useState<number | ''>('')
   const [empresaNome, setEmpresaNome] = useState('')
   const [cnpj, setCnpj] = useState('')
@@ -44,10 +51,42 @@ export function PedidoForm() {
   const valorUnitario = retirada ? valorRetiradaEmpresa : valorEntregaEmpresa
   const totalLiquido = calcTotalLiquido(quantidadeCarga, valorUnitario)
 
+  // Fechar sugestões ao clicar fora
   useEffect(() => {
-    Promise.all([listEmpresasForSelect(), listMotoristasForSelect(), listPlacasForSelect()])
-      .then(([e, m, p]) => {
-        setEmpresas(e)
+    function handleClickOutside(e: MouseEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Busca debounced de empresas ao digitar
+  useEffect(() => {
+    if (!empresaQuery.trim()) {
+      setEmpresaSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    const timer = setTimeout(async () => {
+      setSearchingEmpresas(true)
+      try {
+        const results = await searchEmpresasByNome(empresaQuery)
+        setEmpresaSuggestions(results)
+        setShowSuggestions(true)
+      } catch {
+        setEmpresaSuggestions([])
+      } finally {
+        setSearchingEmpresas(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [empresaQuery])
+
+  useEffect(() => {
+    Promise.all([listMotoristasForSelect(), listPlacasForSelect()])
+      .then(([m, p]) => {
         setMotoristas(m)
         setPlacas(p)
       })
@@ -64,6 +103,7 @@ export function PedidoForm() {
       .then((p) => {
         setEmpresaId(p.empresa_id)
         setEmpresaNome(p.empresa_nome)
+        setEmpresaQuery(p.empresa_nome)
         setCnpj(p.cnpj ?? '')
         setLocalEntrega(p.local_entrega ?? '')
         setRetirada(p.retirada)
@@ -80,12 +120,22 @@ export function PedidoForm() {
       .finally(() => setLoading(false))
   }, [isEdit, id])
 
-  function handleEmpresaChange(value: string) {
-    const eid = Number(value)
-    const empresa = empresas.find((e) => e.id === eid)
-    setEmpresaId(eid || '')
-    if (!empresa) return
+  function handleEmpresaQueryChange(value: string) {
+    setEmpresaQuery(value)
+    // Se o usuário começou a digitar, limpa a seleção anterior
+    if (empresaId) {
+      setEmpresaId('')
+      setEmpresaNome('')
+      setCnpj('')
+      setLocalEntrega('')
+      setValorEntregaEmpresa(0)
+      setValorRetiradaEmpresa(0)
+    }
+  }
 
+  function handleEmpresaSelect(empresa: Empresa) {
+    setEmpresaId(empresa.id)
+    setEmpresaQuery(empresa.nome_fantasia)
     setEmpresaNome(empresa.nome_fantasia)
     setCnpj(empresa.cnpj ?? '')
     setLocalEntrega(empresa.endereco_entrega ?? '')
@@ -94,6 +144,7 @@ export function PedidoForm() {
     setMotoristaId('')
     setMotoristaNome('')
     setPlaca('')
+    setShowSuggestions(false)
 
     if (empresa.valor_retirada > 0) {
       setShowModal(true)
@@ -217,14 +268,41 @@ export function PedidoForm() {
         <form className="record-form" onSubmit={handleSubmit}>
           <label className="span-2">
             Cliente
-            <select value={empresaId} onChange={(e) => handleEmpresaChange(e.target.value)} required>
-              <option value="">Selecione...</option>
-              {empresas.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nome_fantasia}
-                </option>
-              ))}
-            </select>
+            <div className="empresa-combobox" ref={comboboxRef}>
+              <input
+                type="text"
+                value={empresaQuery}
+                onChange={(e) => handleEmpresaQueryChange(e.target.value)}
+                onFocus={() => {
+                  if (empresaSuggestions.length > 0) setShowSuggestions(true)
+                }}
+                placeholder="Digite o nome do cliente..."
+                autoComplete="off"
+              />
+              {searchingEmpresas && (
+                <div className="empresa-combobox__suggestions">
+                  <div className="empresa-combobox__empty">Buscando...</div>
+                </div>
+              )}
+              {!searchingEmpresas && showSuggestions && empresaSuggestions.length === 0 && empresaQuery.trim() && (
+                <div className="empresa-combobox__suggestions">
+                  <div className="empresa-combobox__empty">Nenhum cliente encontrado.</div>
+                </div>
+              )}
+              {!searchingEmpresas && showSuggestions && empresaSuggestions.length > 0 && (
+                <ul className="empresa-combobox__suggestions">
+                  {empresaSuggestions.map((e) => (
+                    <li
+                      key={e.id}
+                      className="empresa-combobox__option"
+                      onMouseDown={() => handleEmpresaSelect(e)}
+                    >
+                      {e.nome_fantasia}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </label>
 
           <label>

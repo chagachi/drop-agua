@@ -136,6 +136,54 @@ table.data-table a:hover {
   font-size: 0.95rem;
 }
 
+.empresa-combobox {
+  position: relative;
+}
+
+.empresa-combobox input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.empresa-combobox__suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.empresa-combobox__option {
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.empresa-combobox__option:last-child {
+  border-bottom: none;
+}
+
+.empresa-combobox__option:hover {
+  background: #eef6fb;
+}
+
+.empresa-combobox__empty {
+  padding: 0.5rem 0.65rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
