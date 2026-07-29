@@ -45,12 +45,13 @@ export function PedidoForm() {
   const [placa, setPlaca] = useState('')
 
   const [quantidadeCarga, setQuantidadeCarga] = useState(0)
-  const [totalLiquidoEditado, setTotalLiquidoEditado] = useState(0)
+  const [totalLiquidoStr, setTotalLiquidoStr] = useState('0.00')
   const [observacao, setObservacao] = useState('')
   const [createdAt, setCreatedAt] = useState('')
 
   const valorUnitario = retirada ? valorRetiradaEmpresa : valorEntregaEmpresa
   const calculatedTotal = calcTotalLiquido(quantidadeCarga, valorUnitario)
+  const totalLiquidoEditado = Math.round((parseFloat(totalLiquidoStr) || 0) * 100) / 100
   const totalLiquido = isAdmin && isEdit ? totalLiquidoEditado : calculatedTotal
 
   // Fechar sugestões ao clicar fora
@@ -113,7 +114,7 @@ export function PedidoForm() {
         setMotoristaNome(p.motorista_nome)
         setPlaca(p.placa)
         setQuantidadeCarga(p.quantidade_carga)
-        setTotalLiquidoEditado(p.total_liquido)
+        setTotalLiquidoStr(p.total_liquido.toFixed(2))
         setObservacao(p.observacao ?? '')
         setCreatedAt(p.created_at.slice(0, 16))
         setValorEntregaEmpresa(p.retirada ? 0 : p.valor_unitario)
@@ -404,10 +405,11 @@ export function PedidoForm() {
             {isAdmin && isEdit ? (
               <>
                 <input
-                  type="number"
-                  step="0.01"
-                  value={totalLiquidoEditado}
-                  onChange={(e) => setTotalLiquidoEditado(Number(e.target.value))}
+                  type="text"
+                  inputMode="decimal"
+                  value={totalLiquidoStr}
+                  onChange={(e) => setTotalLiquidoStr(e.target.value.replace(',', '.'))}
+                  onBlur={() => setTotalLiquidoStr((Math.round((parseFloat(totalLiquidoStr) || 0) * 100) / 100).toFixed(2))}
                 />
                 {calculatedTotal !== totalLiquidoEditado && (
                   <span className="field-hint">Calculado: {formatCurrency(calculatedTotal)}</span>
