@@ -57,6 +57,10 @@
   min-width: 160px;
 }
 
+.relatorios-empresa-combobox {
+  min-width: 200px;
+}
+
 .relatorios-filters__checkbox {
   flex-direction: row !important;
   align-items: center;

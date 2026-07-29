@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '../../components/Header'
-import { listEmpresasForSelect } from '../../services/empresas'
+import { searchEmpresasByNome } from '../../services/empresas'
 import { listMotoristasForSelect } from '../../services/motoristas'
 import { listPedidosByRange } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
@@ -54,7 +54,6 @@ const PRESETS = [
 
 export function Relatorios() {
   const navigate = useNavigate()
-  const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [motoristas, setMotoristas] = useState<Motorista[]>([])
 
   const [startDate, setStartDate] = useState('')
@@ -63,6 +62,13 @@ export function Relatorios() {
   const [motoristaId, setMotoristaId] = useState('')
   const [somenteRetiradas, setSomenteRetiradas] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>(null)
+
+  // Empresa combobox
+  const [empresaQuery, setEmpresaQuery] = useState('')
+  const [empresaSuggestions, setEmpresaSuggestions] = useState<Empresa[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchingEmpresas, setSearchingEmpresas] = useState(false)
+  const comboboxRef = useRef<HTMLDivElement>(null)
 
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [loading, setLoading] = useState(false)
@@ -73,11 +79,54 @@ export function Relatorios() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   useEffect(() => {
-    Promise.all([listEmpresasForSelect(), listMotoristasForSelect()]).then(([e, m]) => {
-      setEmpresas(e)
-      setMotoristas(m)
-    })
+    listMotoristasForSelect().then(setMotoristas).catch(() => setMotoristas([]))
   }, [])
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Busca debounced de empresas ao digitar
+  useEffect(() => {
+    if (!empresaQuery.trim()) {
+      setEmpresaSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    const timer = setTimeout(async () => {
+      setSearchingEmpresas(true)
+      try {
+        const results = await searchEmpresasByNome(empresaQuery)
+        setEmpresaSuggestions(results)
+        setShowSuggestions(true)
+      } catch {
+        setEmpresaSuggestions([])
+      } finally {
+        setSearchingEmpresas(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [empresaQuery])
+
+  function handleEmpresaQueryChange(value: string) {
+    setEmpresaQuery(value)
+    if (empresaId) {
+      setEmpresaId('')
+    }
+  }
+
+  function handleEmpresaSelect(empresa: Empresa) {
+    setEmpresaId(String(empresa.id))
+    setEmpresaQuery(empresa.nome_fantasia)
+    setShowSuggestions(false)
+  }
 
   function applyPreset(label: string, range: () => { startDate: string; finalDate: string }) {
     const { startDate: s, finalDate: f } = range()
@@ -119,6 +168,7 @@ export function Relatorios() {
     setStartDate('')
     setFinalDate('')
     setEmpresaId('')
+    setEmpresaQuery('')
     setMotoristaId('')
     setSomenteRetiradas(false)
     setActivePreset(null)
@@ -245,14 +295,41 @@ export function Relatorios() {
               </label>
               <label>
                 Cliente
-                <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
-                  <option value="">Todos</option>
-                  {empresas.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nome_fantasia}
-                    </option>
-                  ))}
-                </select>
+                <div className="empresa-combobox relatorios-empresa-combobox" ref={comboboxRef}>
+                  <input
+                    type="text"
+                    value={empresaQuery}
+                    onChange={(e) => handleEmpresaQueryChange(e.target.value)}
+                    onFocus={() => {
+                      if (empresaSuggestions.length > 0) setShowSuggestions(true)
+                    }}
+                    placeholder="Todos os clientes"
+                    autoComplete="off"
+                  />
+                  {searchingEmpresas && (
+                    <div className="empresa-combobox__suggestions">
+                      <div className="empresa-combobox__empty">Buscando...</div>
+                    </div>
+                  )}
+                  {!searchingEmpresas && showSuggestions && empresaSuggestions.length === 0 && empresaQuery.trim() && (
+                    <div className="empresa-combobox__suggestions">
+                      <div className="empresa-combobox__empty">Nenhum cliente encontrado.</div>
+                    </div>
+                  )}
+                  {!searchingEmpresas && showSuggestions && empresaSuggestions.length > 0 && (
+                    <ul className="empresa-combobox__suggestions">
+                      {empresaSuggestions.map((e) => (
+                        <li
+                          key={e.id}
+                          className="empresa-combobox__option"
+                          onMouseDown={() => handleEmpresaSelect(e)}
+                        >
+                          {e.nome_fantasia}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </label>
               <label>
                 Motorista
