@@ -45,11 +45,13 @@ export function PedidoForm() {
   const [placa, setPlaca] = useState('')
 
   const [quantidadeCarga, setQuantidadeCarga] = useState(0)
+  const [totalLiquidoEditado, setTotalLiquidoEditado] = useState(0)
   const [observacao, setObservacao] = useState('')
   const [createdAt, setCreatedAt] = useState('')
 
   const valorUnitario = retirada ? valorRetiradaEmpresa : valorEntregaEmpresa
-  const totalLiquido = calcTotalLiquido(quantidadeCarga, valorUnitario)
+  const calculatedTotal = calcTotalLiquido(quantidadeCarga, valorUnitario)
+  const totalLiquido = isAdmin && isEdit ? totalLiquidoEditado : calculatedTotal
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -111,6 +113,7 @@ export function PedidoForm() {
         setMotoristaNome(p.motorista_nome)
         setPlaca(p.placa)
         setQuantidadeCarga(p.quantidade_carga)
+        setTotalLiquidoEditado(p.total_liquido)
         setObservacao(p.observacao ?? '')
         setCreatedAt(p.created_at.slice(0, 16))
         setValorEntregaEmpresa(p.retirada ? 0 : p.valor_unitario)
@@ -398,9 +401,23 @@ export function PedidoForm() {
 
           <label>
             Total Líquido
-            <span className="field-readonly">
-              <strong>{formatCurrency(totalLiquido)}</strong>
-            </span>
+            {isAdmin && isEdit ? (
+              <>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={totalLiquidoEditado}
+                  onChange={(e) => setTotalLiquidoEditado(Number(e.target.value))}
+                />
+                {calculatedTotal !== totalLiquidoEditado && (
+                  <span className="field-hint">Calculado: {formatCurrency(calculatedTotal)}</span>
+                )}
+              </>
+            ) : (
+              <span className="field-readonly">
+                <strong>{formatCurrency(totalLiquido)}</strong>
+              </span>
+            )}
           </label>
 
           <div className="record-form__actions">
