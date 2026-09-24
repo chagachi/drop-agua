@@ -167,6 +167,13 @@ export function PedidoForm() {
     setShowModal(false)
   }
 
+  // Alterar a carga sempre recalcula o total; alterar o total não mexe na carga
+  function handleQuantidadeCargaChange(value: string) {
+    const quantidade = Number(value)
+    setQuantidadeCarga(quantidade)
+    setTotalLiquidoStr(calcTotalLiquido(quantidade, valorUnitario).toFixed(2))
+  }
+
   function handleMotoristaChange(value: string) {
     const mid = Number(value)
     const motorista = motoristas.find((m) => m.id === mid)
@@ -375,7 +382,7 @@ export function PedidoForm() {
               type="number"
               step="0.001"
               value={quantidadeCarga}
-              onChange={(e) => setQuantidadeCarga(Number(e.target.value))}
+              onChange={(e) => handleQuantidadeCargaChange(e.target.value)}
               required
             />
           </label>
