@@ -1,16 +1,27 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '../../components/Header'
+import { useAuth } from '../../auth/useAuth'
 import { searchEmpresasByNome } from '../../services/empresas'
 import { listMotoristasForSelect } from '../../services/motoristas'
-import { listPedidosByRange } from '../../services/pedidos'
+import { listPedidosByRange, updatePedido } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
-import { sumQuantidade, sumTotalLiquido } from '../../utils/calc'
+import { calcTotalLiquido, sumQuantidade, sumTotalLiquido } from '../../utils/calc'
 import type { Empresa, Motorista, Pedido } from '../../types/database'
 import './Relatorios.css'
 
 type SortField = 'id' | 'created_at' | 'empresa_nome' | 'quantidade_carga' | 'total_liquido'
 type SortDirection = 'asc' | 'desc'
+
+interface EdicaoVale {
+  id: number
+  quantidadeStr: string
+  totalStr: string
+}
+
+function parseValor(value: string): number {
+  return Math.round((parseFloat(value.replace(',', '.')) || 0) * 100) / 100
+}
 
 function toDateInput(d: Date) {
   return d.toISOString().slice(0, 10)
@@ -54,6 +65,7 @@ const PRESETS = [
 
 export function Relatorios() {
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const [motoristas, setMotoristas] = useState<Motorista[]>([])
 
   const [startDate, setStartDate] = useState('')
@@ -77,6 +89,12 @@ export function Relatorios() {
 
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  // Edição rápida de vale (somente admin): quantidade e total, com confirmação
+  const [edicao, setEdicao] = useState<EdicaoVale | null>(null)
+  const [confirmando, setConfirmando] = useState(false)
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false)
+  const [erroEdicao, setErroEdicao] = useState<string | null>(null)
 
   useEffect(() => {
     listMotoristasForSelect().then(setMotoristas).catch(() => setMotoristas([]))
@@ -143,6 +161,7 @@ export function Relatorios() {
 
     setLoading(true)
     setError(null)
+    cancelarEdicao()
     try {
       const resultado = await listPedidosByRange(
         new Date(startDate).toISOString(),
@@ -175,6 +194,7 @@ export function Relatorios() {
     setPedidos([])
     setSearched(false)
     setError(null)
+    cancelarEdicao()
   }
 
   function handlePrint() {
@@ -243,6 +263,73 @@ export function Relatorios() {
   function sortArrow(field: SortField) {
     if (field !== sortField) return null
     return <span className="sort-arrow">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+  }
+
+  const valeEmEdicao = edicao ? pedidos.find((p) => p.id === edicao.id) : undefined
+  const novaQuantidade = edicao ? Number(edicao.quantidadeStr.replace(',', '.')) || 0 : 0
+  const novoTotal = edicao ? parseValor(edicao.totalStr) : 0
+
+  function iniciarEdicao(p: Pedido) {
+    setEdicao({ id: p.id, quantidadeStr: String(p.quantidade_carga), totalStr: p.total_liquido.toFixed(2) })
+    setErroEdicao(null)
+  }
+
+  function cancelarEdicao() {
+    setEdicao(null)
+    setConfirmando(false)
+    setErroEdicao(null)
+  }
+
+  // Alterar a carga sempre recalcula o total; alterar o total não mexe na carga
+  function handleEdicaoQuantidade(value: string) {
+    if (!edicao || !valeEmEdicao) return
+    const quantidade = Number(value.replace(',', '.')) || 0
+    setEdicao({
+      ...edicao,
+      quantidadeStr: value,
+      totalStr: calcTotalLiquido(quantidade, valeEmEdicao.valor_unitario).toFixed(2),
+    })
+  }
+
+  function pedirConfirmacao() {
+    if (!edicao || !valeEmEdicao) return
+    if (novaQuantidade <= 0) {
+      setErroEdicao('Informe uma quantidade maior que zero.')
+      return
+    }
+    if (novaQuantidade === valeEmEdicao.quantidade_carga && novoTotal === valeEmEdicao.total_liquido) {
+      cancelarEdicao()
+      return
+    }
+    setErroEdicao(null)
+    setConfirmando(true)
+  }
+
+  async function confirmarEdicao() {
+    if (!edicao) return
+    setSalvandoEdicao(true)
+    try {
+      const atualizado = await updatePedido(edicao.id, {
+        quantidade_carga: novaQuantidade,
+        total_liquido: novoTotal,
+      })
+      setPedidos((lista) => lista.map((p) => (p.id === atualizado.id ? atualizado : p)))
+      cancelarEdicao()
+    } catch (err) {
+      setConfirmando(false)
+      setErroEdicao(err instanceof Error ? err.message : 'Erro ao salvar o vale.')
+    } finally {
+      setSalvandoEdicao(false)
+    }
+  }
+
+  function handleEdicaoKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      pedirConfirmacao()
+    } else if (e.key === 'Escape') {
+      cancelarEdicao()
+    }
   }
 
   return (
@@ -430,33 +517,132 @@ export function Relatorios() {
                           Total{sortArrow('total_liquido')}
                         </th>
                         <th>Observação</th>
+                        {isAdmin && <th className="relatorios-acoes">Ações</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {resultadoFiltrado.map((p) => (
-                        <tr key={p.id}>
-                          <td>#{p.id}</td>
-                          <td>{formatDate(p.created_at)}</td>
-                          <td>{p.empresa_nome}</td>
-                          <td>{p.motorista_nome}</td>
-                          <td>
-                            <span
-                              className={`relatorios-badge ${p.retirada ? 'relatorios-badge--retirada' : 'relatorios-badge--entrega'}`}
-                            >
-                              {p.retirada ? 'Retirada' : 'Entrega'}
-                            </span>
-                          </td>
-                          <td className="num">{p.quantidade_carga}</td>
-                          <td className="num">{formatCurrency(p.total_liquido)}</td>
-                          <td>{p.observacao}</td>
-                        </tr>
-                      ))}
+                      {resultadoFiltrado.map((p) => {
+                        const editando = edicao?.id === p.id
+                        return (
+                          <tr key={p.id} className={editando ? 'relatorios-row--editando' : undefined}>
+                            <td>#{p.id}</td>
+                            <td>{formatDate(p.created_at)}</td>
+                            <td>{p.empresa_nome}</td>
+                            <td>{p.motorista_nome}</td>
+                            <td>
+                              <span
+                                className={`relatorios-badge ${p.retirada ? 'relatorios-badge--retirada' : 'relatorios-badge--entrega'}`}
+                              >
+                                {p.retirada ? 'Retirada' : 'Entrega'}
+                              </span>
+                            </td>
+                            {editando && edicao ? (
+                              <>
+                                <td className="num">
+                                  <input
+                                    className="relatorios-edit-input"
+                                    type="number"
+                                    step="0.001"
+                                    min="0"
+                                    value={edicao.quantidadeStr}
+                                    onChange={(e) => handleEdicaoQuantidade(e.target.value)}
+                                    onKeyDown={handleEdicaoKeyDown}
+                                    aria-label="Quantidade (m³)"
+                                    autoFocus
+                                  />
+                                </td>
+                                <td className="num">
+                                  <input
+                                    className="relatorios-edit-input"
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={edicao.totalStr}
+                                    onChange={(e) => setEdicao({ ...edicao, totalStr: e.target.value })}
+                                    onBlur={() => setEdicao({ ...edicao, totalStr: parseValor(edicao.totalStr).toFixed(2) })}
+                                    onKeyDown={handleEdicaoKeyDown}
+                                    aria-label="Total"
+                                  />
+                                  {erroEdicao && <span className="relatorios-edit-erro">{erroEdicao}</span>}
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="num">{p.quantidade_carga}</td>
+                                <td className="num">{formatCurrency(p.total_liquido)}</td>
+                              </>
+                            )}
+                            <td>{p.observacao}</td>
+                            {isAdmin && (
+                              <td className="relatorios-acoes">
+                                {editando ? (
+                                  <>
+                                    <button className="btn btn-primary btn-sm" type="button" onClick={pedirConfirmacao}>
+                                      Salvar
+                                    </button>
+                                    <button className="btn btn-secondary btn-sm" type="button" onClick={cancelarEdicao}>
+                                      Cancelar
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    type="button"
+                                    onClick={() => iniciarEdicao(p)}
+                                    disabled={edicao !== null}
+                                  >
+                                    Editar
+                                  </button>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
               </>
             )}
           </>
+        )}
+
+        {confirmando && edicao && valeEmEdicao && (
+          <div className="modal-overlay">
+            <div className="modal-box">
+              <h2>Confirmar alteração?</h2>
+              <p>
+                Vale Nº {valeEmEdicao.id} — {valeEmEdicao.empresa_nome}
+              </p>
+              <table className="relatorios-confirm-table">
+                <tbody>
+                  <tr>
+                    <th>Quantidade</th>
+                    <td>{valeEmEdicao.quantidade_carga} m³</td>
+                    <td>→</td>
+                    <td>
+                      <strong>{novaQuantidade} m³</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Total</th>
+                    <td>{formatCurrency(valeEmEdicao.total_liquido)}</td>
+                    <td>→</td>
+                    <td>
+                      <strong>{formatCurrency(novoTotal)}</strong>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="modal-box__actions">
+                <button className="btn btn-secondary" type="button" onClick={() => setConfirmando(false)} disabled={salvandoEdicao}>
+                  Voltar
+                </button>
+                <button className="btn btn-primary" type="button" onClick={confirmarEdicao} disabled={salvandoEdicao}>
+                  {salvandoEdicao ? 'Salvando...' : 'Confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

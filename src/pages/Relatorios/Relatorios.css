@@ -166,3 +166,56 @@
   color: #888;
   padding: 3rem 0;
 }
+
+.relatorios-acoes {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.relatorios-acoes .btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.relatorios-acoes .btn-sm + .btn-sm {
+  margin-left: 0.4rem;
+}
+
+.relatorios-table tbody tr.relatorios-row--editando td {
+  background: #eef6fa;
+}
+
+.relatorios-edit-input {
+  width: 7rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #0b6e99;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.relatorios-edit-erro {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #c0392b;
+  text-align: right;
+}
+
+.relatorios-confirm-table {
+  margin: 1rem auto 0;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.relatorios-confirm-table th,
+.relatorios-confirm-table td {
+  padding: 0.3rem 0.5rem;
+  text-align: right;
+}
+
+.relatorios-confirm-table th {
+  text-align: left;
+  color: #777;
+  font-weight: 500;
+}
