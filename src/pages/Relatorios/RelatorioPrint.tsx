@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listPedidosByRange } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
+import { endOfDayISO, startOfDayISO } from '../../utils/date'
 import { sumQuantidade, sumTotalLiquido } from '../../utils/calc'
 import type { Pedido } from '../../types/database'
 import './RelatorioPrint.css'
@@ -21,8 +22,8 @@ export function RelatorioPrint() {
   useEffect(() => {
     if (!startDate || !finalDate) return
     listPedidosByRange(
-      new Date(startDate).toISOString(),
-      new Date(`${finalDate}T23:59:59`).toISOString(),
+      startOfDayISO(startDate),
+      endOfDayISO(finalDate),
       empresaId ? Number(empresaId) : undefined,
       motoristaId ? Number(motoristaId) : undefined
     )

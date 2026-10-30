@@ -6,6 +6,7 @@ import { searchEmpresasByNome } from '../../services/empresas'
 import { listMotoristasForSelect } from '../../services/motoristas'
 import { listPedidosByRange, updatePedido } from '../../services/pedidos'
 import { formatCurrency, formatDate } from '../../utils/format'
+import { endOfDayISO, startOfDayISO, toDateInput } from '../../utils/date'
 import { calcTotalLiquido, sumQuantidade, sumTotalLiquido } from '../../utils/calc'
 import type { Empresa, Motorista, Pedido } from '../../types/database'
 import './Relatorios.css'
@@ -21,10 +22,6 @@ interface EdicaoVale {
 
 function parseValor(value: string): number {
   return Math.round((parseFloat(value.replace(',', '.')) || 0) * 100) / 100
-}
-
-function toDateInput(d: Date) {
-  return d.toISOString().slice(0, 10)
 }
 
 const PRESETS = [
@@ -164,8 +161,8 @@ export function Relatorios() {
     cancelarEdicao()
     try {
       const resultado = await listPedidosByRange(
-        new Date(startDate).toISOString(),
-        new Date(`${finalDate}T23:59:59`).toISOString(),
+        startOfDayISO(startDate),
+        endOfDayISO(finalDate),
         empresaId ? Number(empresaId) : undefined,
         motoristaId ? Number(motoristaId) : undefined
       )

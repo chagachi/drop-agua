@@ -8,6 +8,7 @@ import { listPlacasForSelect } from '../../services/placas'
 import { createPedido, getPedido, updatePedido } from '../../services/pedidos'
 import { formatCurrency } from '../../utils/format'
 import { calcTotalLiquido } from '../../utils/calc'
+import { toDateTimeInput } from '../../utils/date'
 import type { Empresa, Motorista, Placa } from '../../types/database'
 
 export function PedidoForm() {
@@ -116,7 +117,7 @@ export function PedidoForm() {
         setQuantidadeCarga(p.quantidade_carga)
         setTotalLiquidoStr(p.total_liquido.toFixed(2))
         setObservacao(p.observacao ?? '')
-        setCreatedAt(p.created_at.slice(0, 16))
+        setCreatedAt(toDateTimeInput(p.created_at))
         setValorEntregaEmpresa(p.retirada ? 0 : p.valor_unitario)
         setValorRetiradaEmpresa(p.retirada ? p.valor_unitario : 0)
       })

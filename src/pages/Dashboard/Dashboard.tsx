@@ -32,6 +32,7 @@ export function Dashboard() {
     const start = new Date()
     start.setMonth(start.getMonth() - (MONTHS_BACK - 1))
     start.setDate(1)
+    start.setHours(0, 0, 0, 0)
 
     listPedidosByRange(start.toISOString(), new Date().toISOString())
       .then(setRecentPedidos)
